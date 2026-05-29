@@ -1,0 +1,6 @@
+# 不发布备份与二进制
+*.orig
+*.bak.*
+claude.exe
+*.exe
+.DS_Store
