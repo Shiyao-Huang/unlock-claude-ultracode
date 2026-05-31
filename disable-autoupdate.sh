@@ -43,11 +43,17 @@ if (s.env.DISABLE_AUTOUPDATER === "1") {
 }
 NODE
 
-echo "[2/3] 应用 ultracode 补丁"
-if [[ -x "$HERE/patch-ultracode.sh" || -f "$HERE/patch-ultracode.sh" ]]; then
+echo "[2/3] 应用 ultracode 补丁(优先用版本自适应的 repatch)"
+# 优先 repatch-ultracode.sh:结构正则定位两个门控函数,跨小版本自适应(2.1.156/158/…)。
+# 仅当它不存在时,才回退到版本锁定的 patch-ultracode.sh(只认 2.1.156)。
+# One-shot: prefer the version-adaptive repatch; fall back to the 2.1.156-locked patch.
+if [[ -f "$HERE/repatch-ultracode.sh" ]]; then
+  bash "$HERE/repatch-ultracode.sh"
+elif [[ -f "$HERE/patch-ultracode.sh" ]]; then
+  echo "  (未找到 repatch-ultracode.sh,回退到版本锁定的 patch-ultracode.sh)" >&2
   bash "$HERE/patch-ultracode.sh"
 else
-  echo "ERROR: 找不到同目录的 patch-ultracode.sh" >&2
+  echo "ERROR: 找不到同目录的 repatch-ultracode.sh 或 patch-ultracode.sh" >&2
   exit 1
 fi
 

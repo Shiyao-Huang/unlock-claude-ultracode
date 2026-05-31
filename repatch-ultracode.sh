@@ -134,8 +134,14 @@ else
 fi
 
 # ---------- 5) 验证 ----------
-nmark=$(LC_ALL=C grep -a -c -F 'return!0/*ULTRACODE_PATCH' "$BIN" || true)
-say "[5/5] 验证:ULTRACODE_PATCH 标记数 = $nmark(应为 2)"
+# 注意:minified JS 基本是单行,所以用 grep -c(数行)会把两处标记算成 1。
+# 这里用 grep -o | wc -l 统计「出现次数」,才是真实的补丁点数量。
+nmark=$(LC_ALL=C grep -a -o -F 'return!0/*ULTRACODE_PATCH' "$BIN" | wc -l | tr -d ' ')
+if [[ "$nmark" -ge 2 ]]; then
+  say "[5/5] 验证:ULTRACODE_PATCH 补丁点 = $nmark(应 ≥ 2)✓"
+else
+  say "[5/5] 警告:ULTRACODE_PATCH 补丁点 = $nmark(应 ≥ 2)——补丁可能不完整" >&2
+fi
 "$BIN" --version >/dev/null 2>&1 && say "       二进制可启动: ok" || say "       警告:二进制启动检测失败"
 
 cat <<'EOF'

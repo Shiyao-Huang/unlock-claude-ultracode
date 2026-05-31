@@ -1,5 +1,7 @@
 # claude-ultracode-patch
 
+> English version: [README.en.md](./README.en.md).
+
 强制开启 Claude Code 的 **ultracode** 模式(xhigh 推理 + 常驻动态工作流编排)。
 针对 Bun 编译的单文件二进制。
 
