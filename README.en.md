@@ -1,48 +1,36 @@
-# claude-ultracode-patch
+<div align="center">
 
-Force-enable Claude Code's **ultracode** effort mode (xhigh reasoning + standing
-dynamic-workflow orchestration) on the Bun-compiled single-file binary.
+# Unlock Claude Code Ultracode Mode
 
-> 中文版见 [README.md](./README.md).
+**Force-enable Claude Code `ultracode` effort mode** — xhigh reasoning + dynamic workflow orchestration
 
-Claude Code ships new builds almost daily, and every upgrade overwrites the
-binary and loses the patch. So this repo gives you two things:
+English · [中文](./README.md)
 
-1. A **version-adaptive** patcher that locates the gates by *code shape* instead
-   of by hard-coded minified names — so it keeps working across daily releases
-   without a rewrite.
-2. An **auto-update switch** so a patched binary isn't silently replaced.
+[![GitHub release](https://img.shields.io/github/v/tag/Shiyao-Huang/unlock-claude-ultracode?label=version&color=brightgreen)](https://github.com/Shiyao-Huang/unlock-claude-ultracode)
+[![Supported versions](https://img.shields.io/badge/claude%20code-2.1.113%2B-blue)](https://www.npmjs.com/package/@anthropic-ai/claude-code)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)](https://github.com/Shiyao-Huang/unlock-claude-ultracode)
+[![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
+[![Auto-update](https://img.shields.io/badge/daily%20cron-auto%20repatch-orange)](./auto-repatch.sh)
 
-> ultracode exists only in the Bun single-file binary (2.1.113+), never in the
-> Node `cli.js` builds.
+One-click unlock for Claude Code's hidden **ultracode** effort level (maximum reasoning + standing
+dynamic-workflow orchestration). Version-adaptive — automatically handles 2.1.156, 2.1.158, and
+future daily builds without manual patch updates. Ships with a daily cron for auto-upgrade + re-patch.
 
-## How it works
+</div>
 
-Claude Code gates `/effort ultracode` behind two predicates in its embedded JS.
-Their names are **minified and change between versions** (e.g. `v0`/`vx` in
-2.1.156 became `XW`/`Fx` in 2.1.158), so the adaptive patcher matches them by
-structure:
+---
 
-| Gate | Original meaning | Patched to |
-|---|---|---|
-| **Workflow gate** | Are dynamic workflows enabled? `let{available,defaultOn}=…(); if(!available)return!1; return …()??defaultOn` | `return!0` (always on) |
-| **Admission gate** | ultracode accept: `WORKFLOW() && (arg===undefined \|\| XHIGH_OK(arg))` | `return!0` (always accept) |
+## Features
 
-Both edits are **length-preserving** — the patched body is padded back to the
-original length with a `/*ULTRACODE_PATCH---*/` comment, so no byte offsets
-shift. On macOS, editing bytes invalidates the hardened-runtime signature and
-the OS kills the process, so the script **ad-hoc re-signs** (`codesign -f -s -`);
-Linux/ELF needs no signature and is skipped.
+- **🔓 One-click ultracode unlock** — `/effort ultracode` just works, enabling xhigh + dynamic workflows
+- **🔄 Version-adaptive** — three-stage gate detection (structural regex → known patterns → semantic anchors) adapts across builds
+- **⏰ Daily auto-update** — cron checks npm for new versions, auto-upgrades, re-patches, and records a per-version git branch
+- **🛡️ Safe & reversible** — idempotent, length-preserving edits, automatic backup, macOS re-signing, full rollback
+- **🖥️ Cross-platform** — macOS (Apple Silicon / Intel) + Linux, auto-locates binary, no manual path needed
 
-The scripts are **idempotent**, **host-adaptive** (auto-locate the binary), and
-back the original up to `~/.claude/backups/claude.exe.<version>.orig`.
+## Quick Start
 
-## Install
-
-**All-in-one, version-adaptive, update-resilient (recommended):**
-
-Disables auto-update (so the patch isn't overwritten) **and** applies the
-adaptive patch + re-sign + verify, in one run:
+**Recommended: all-in-one install (disable auto-update + patch + re-sign)**
 
 ```bash
 git clone https://github.com/Shiyao-Huang/unlock-claude-ultracode.git
@@ -50,42 +38,76 @@ cd unlock-claude-ultracode
 bash disable-autoupdate.sh
 ```
 
-**Adaptive patch only (don't touch auto-update):**
+**Patch only (leave auto-update settings untouched)**
 
 ```bash
 bash repatch-ultracode.sh
-# or pass an explicit path if auto-detect fails:
-bash repatch-ultracode.sh /custom/path/to/claude.exe
 ```
 
-> **Why disable auto-update?** Claude Code's background updater replaces the
-> patched `claude.exe` with the stock binary, so ultracode vanishes. The
-> all-in-one injects `env.DISABLE_AUTOUPDATER=1` into `~/.claude/settings.json`
-> to prevent this. To upgrade later: manually
-> `npm i -g @anthropic-ai/claude-code@latest`, then re-run the script.
-
-## After patching
-
-1. **Fully quit and relaunch `claude`** — the running process still holds the
-   old binary in memory.
-2. Run `/effort ultracode`.
-3. Success looks like:
-   `Set effort level to ultracode (this session only): xhigh + dynamic workflow orchestration`
-   — not the `Ultracode needs dynamic workflows enabled` error.
-
-## Keeping up with daily releases
-
-Each upgrade overwrites the binary and drops the patch. The adaptive scripts are
-built for exactly this — just re-run after any update:
+**Set up daily auto-update (runs at 3 AM every day)**
 
 ```bash
-bash disable-autoupdate.sh   # or: bash repatch-ultracode.sh
+(crontab -l 2>/dev/null | grep -v auto-repatch; echo "0 3 * * * /bin/bash $(pwd)/auto-repatch.sh --cron >> ~/.claude/backups/auto-repatch-stdout.log 2>&1") | crontab -
 ```
 
-The adaptive patcher matches by structure, so it survives minified-name churn.
-It **refuses to write** if it can't find the gates unambiguously — if a future
-release reshapes the predicates it aborts cleanly (binary untouched) rather than
-corrupting anything, and the gate regexes can be updated for the new shape.
+After patching, **fully quit and relaunch `claude`**, then run:
+
+```
+/effort ultracode
+```
+
+Success: `Set effort level to ultracode (this session only): xhigh + dynamic workflow orchestration`
+
+## How It Works
+
+Claude Code gates `/effort ultracode` behind two predicates in the Bun-compiled binary's embedded JS:
+
+| Gate | Original logic | Patched to |
+|---|---|---|
+| **Workflow Gate** | `let{available:A,defaultOn:B}=FN(); if(!A)return!1; return FN2()??B` | `return!0` (always true) |
+| **Admission Gate** | `FN() && (arg===void 0 \|\| FN2(arg))` | `return!0` (always accept) |
+
+The function names are **minified and change with every build** (e.g. `v0/vx` in 2.1.156 → `XW/Fx` in 2.1.158), so the patcher matches by **code shape**, not by name — surviving the obfuscation churn across daily releases.
+
+Both edits are **length-preserving** (padded with `/*ULTRACODE_PATCH---*/`), so no byte offsets shift. macOS re-signs ad-hoc because byte edits invalidate the hardened-runtime signature.
+
+### Three-Stage Gate Detection
+
+```
+Stage 1: Structural regex ── matches by code shape (covers all known versions 2.1.113+)
+    ↓ no match
+Stage 2: Known byte patterns ─ exact patterns for registered versions (2.1.156, 2.1.158)
+    ↓ no match
+Stage 3: Semantic anchors ── reverse-locates gates via ultracode/available/defaultOn strings
+    ↓ all failed
+    Safe abort — binary untouched
+```
+
+## Daily Auto-Update
+
+`auto-repatch.sh` provides fully automated version tracking:
+
+1. Query npm registry for the latest Claude Code version
+2. If newer → `npm i -g @anthropic-ai/claude-code@latest`
+3. Run the three-stage adaptive patch
+4. Create a `patch/<version>` git branch with patch metadata (timestamp, original SHA256)
+5. Append to `~/.claude/backups/auto-repatch.log`
+
+Sample log:
+```
+[2026-06-01 00:30:56] version=2.1.158 upgrade=none patch=ok branch=patch/2.1.158
+```
+
+## Files
+
+| File | Purpose | Version support |
+|---|---|---|
+| `auto-repatch.sh` | Daily auto-upgrade + patch + per-version branch | Adaptive ✅ |
+| `disable-autoupdate.sh` | All-in-one: disable auto-update + adaptive patch + re-sign | Adaptive ✅ |
+| `repatch-ultracode.sh` | Three-stage adaptive patch (patch only) | Adaptive ✅ |
+| `unlock-ultracode.sh` | Legacy all-in-one (disable update + patch + re-sign) | 2.1.156 only |
+| `patch-ultracode.sh` | Legacy patch only | 2.1.156 only |
+| `inline-command.sh` | Inline one-liner (no script file needed) | 2.1.156 only |
 
 ## Rollback
 
@@ -100,25 +122,28 @@ cp "$HOME/.claude/backups/claude.exe.$VER.orig" "$BIN"
 
 - `python3` (byte patch), `node` (read version), `npm` (path fallback)
 - macOS: `codesign` (ships with Xcode CLT)
-- Claude Code 2.1.113+ (Bun single-file binary; tested on 2.1.156 and 2.1.158)
+- Claude Code **2.1.113+** (Bun single-file binary)
 
 ## Caveats
 
-- This modifies an Anthropic-distributed binary; the signature becomes ad-hoc.
-  Use at your own discretion.
-- ultracode is "this session only" by design — it is not persisted to settings.
+- Modifies an Anthropic-distributed binary; signature becomes ad-hoc. Use at your own discretion.
+- ultracode is "this session only" by design — not persisted to settings.
+- With auto-update disabled, upgrade manually: `npm i -g @anthropic-ai/claude-code@latest`, then re-run the patch.
 
-## Files
+## Contributing
 
-| File | Role | Version handling |
-|---|---|---|
-| `disable-autoupdate.sh` | **All-in-one**: disable auto-update + adaptive patch + re-sign + verify | adaptive (prefers `repatch`) |
-| `repatch-ultracode.sh` | Adaptive patch only — locates gates by code shape, refuses on ambiguity | adaptive ✅ |
-| `unlock-ultracode.sh` | Older all-in-one (disable update + patch + re-sign) | **locked to 2.1.156** |
-| `patch-ultracode.sh` | Older patch-only | **locked to 2.1.156** |
-| `inline-command.sh` | No-file copy-paste one-liner | **locked to 2.1.156** |
-| `ultracode-patch-prompt.md` | Prompt to drive the patch via a Claude Code session | **locked to 2.1.156** |
+If the adaptive patcher fails on a new version, open an issue with the version number and the patcher output. The exact byte-pattern mapping will be updated.
 
-> The `*-locked to 2.1.156*` scripts hard-code that version's minified names and
-> refuse other versions. For daily-updated installs, use the **adaptive** path
-> (`disable-autoupdate.sh` / `repatch-ultracode.sh`).
+## License
+
+MIT License
+
+---
+
+<div align="center">
+
+**Keywords:** Claude Code ultracode, effort level, xhigh, dynamic workflow orchestration,
+Claude Code patch, unlock ultracode, force enable ultracode, Claude Code binary patch,
+Bun binary patch, Claude Code mod, max effort level, Anthropic Claude Code
+
+</div>
