@@ -1,0 +1,11 @@
+{
+  "version": "2.1.158",
+  "patched_at": "2026-06-01 00:24:41",
+  "status": "ok",
+  "original_sha256": "536a0517fa64d48ddcbc8eb511a3d08027d47e06d148872332a8041d72c22768",
+  "patcher": "repatch-ultracode.sh",
+  "gates": {
+    "workflow": "matched by shape: function NAME(){...let{available:A,defaultOn:B}=...;if(!A)return!1;return ...??B}",
+    "admission": "matched by shape: function NAME(ARG){return FN()&&(ARG===void 0||FN2(ARG))}"
+  }
+}
