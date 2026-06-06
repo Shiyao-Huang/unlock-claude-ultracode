@@ -76,6 +76,10 @@ KNOWN_VERSIONS = {
         ("GateA 准入门", b'function Fx(H){return XW()&&(H===void 0||ocH(H))}', b'function Fx(H){return!0'),
         ("GateB 工作流闸", b'function XW(){if(QK6())return!1;if(!s67())return!1;let{available:H,defaultOn:_}=xP8();if(!H)return!1;return jP5()??_}', b'function XW(){return!0'),
     ],
+    b"2.1.167": [
+        ("GateA 准入门", b'function ru(H){return wP()&&(H===void 0||thH(H))}', b'function ru(H){return!0'),
+        ("GateB 工作流闸", b'function wP(){if(l36())return!1;if(!f37())return!1;let{available:H,defaultOn:_}=uL8();if(!H)return!1;return pg5()??_}', b'function wP(){return!0'),
+    ],
 }
 
 # ============================================================
